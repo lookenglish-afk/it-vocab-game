@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Head Tilt IT Vocab Game - Nghiêng Đầu Đúng Hướng</title>
+  <title>Head Tilt IT Vocab Game - 25 Tech Terms Challenge</title>
   <!-- MediaPipe Face Mesh & Camera Utils -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
@@ -26,17 +26,17 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 35px;
+      padding: 0 30px;
       background: #0f172a;
       border-bottom: 3px solid #0284c7;
       z-index: 10;
     }
     .badge {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: bold;
       color: #38bdf8;
       background: #1e293b;
-      padding: 8px 18px;
+      padding: 6px 16px;
       border-radius: 10px;
       border: 1px solid #334155;
     }
@@ -46,20 +46,42 @@
       color: #facc15;
       background: #422006;
       border: 2px solid #ca8a04;
-      padding: 8px 24px;
+      padding: 6px 20px;
       border-radius: 12px;
-      animation: pulse 1s infinite alternate;
+      transition: all 0.3s;
     }
-    @keyframes pulse {
-      from { transform: scale(1); }
-      to { transform: scale(1.05); }
+    .btn-invert {
+      font-family: "Times New Roman", Times, serif;
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid #64748b;
+      padding: 6px 14px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-invert:hover {
+      background: #475569;
     }
 
-    /* NỘI DUNG ĐỊNH NGHĨA */
+    /* TIẾN ĐỘ 25 CÂU */
+    .progress-strip {
+      height: 6px;
+      background: #1e293b;
+      width: 100%;
+    }
+    .progress-fill-main {
+      height: 100%;
+      background: #38bdf8;
+      width: 4%;
+      transition: width 0.3s ease;
+    }
+
+    /* BANNER CÂU HỎI */
     .question-banner {
       background: #1e293b;
       text-align: center;
-      padding: 14px 25px;
+      padding: 12px 25px;
       border-bottom: 2px solid #334155;
       z-index: 10;
     }
@@ -70,7 +92,7 @@
       margin-bottom: 4px;
     }
     .q-english {
-      font-size: 24px;
+      font-size: 22px;
       color: #cbd5e1;
       font-style: italic;
     }
@@ -115,7 +137,7 @@
       border: 1px solid #475569;
     }
     .choice-text {
-      font-size: 38px;
+      font-size: 36px;
       font-weight: bold;
       color: #ffffff;
       line-height: 1.3;
@@ -131,10 +153,10 @@
       transition: width 0.05s linear;
     }
 
-    /* TRẠNG THÁI NGHIÊNG */
+    /* TRẠNG THÁI ACTIVE */
     .choice-box.tilting {
       border-color: #38bdf8;
-      transform: scale(1.04);
+      transform: scale(1.05);
       box-shadow: 0 0 35px rgba(56, 189, 248, 0.6);
     }
     .choice-box.correct {
@@ -164,12 +186,12 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* Giao diện gương trực quan */
+      transform: scaleX(-1);
     }
     .tilt-status {
       position: absolute;
       bottom: 15px;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.8);
       border: 1px solid #38bdf8;
       padding: 8px 20px;
       border-radius: 20px;
@@ -187,7 +209,7 @@
       pointer-events: none;
     }
 
-    /* MÀN HÌNH BẮT ĐẦU */
+    /* OVERLAY KHỞI ĐỘNG */
     #start-overlay {
       position: absolute;
       inset: 0;
@@ -200,11 +222,11 @@
       text-align: center;
       padding: 30px;
     }
-    .btn-start {
+    .btn-action {
       font-family: "Times New Roman", Times, serif;
-      font-size: 32px;
+      font-size: 30px;
       font-weight: bold;
-      padding: 16px 45px;
+      padding: 14px 40px;
       background: #0284c7;
       color: white;
       border: none;
@@ -214,42 +236,94 @@
       box-shadow: 0 0 25px rgba(2, 132, 199, 0.5);
       transition: all 0.2s;
     }
-    .btn-start:hover {
+    .btn-action:hover {
       background: #0369a1;
       transform: scale(1.05);
+    }
+
+    /* MÀN HÌNH KẾT THÚC (GAME OVER) */
+    #end-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.98);
+      z-index: 100;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px;
+    }
+    .summary-card {
+      background: #0f172a;
+      border: 3px solid #38bdf8;
+      border-radius: 20px;
+      padding: 30px 50px;
+      max-width: 650px;
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.3);
+    }
+    .result-stat {
+      font-size: 26px;
+      margin: 12px 0;
+      color: #e2e8f0;
     }
   </style>
 </head>
 <body>
 
-  <!-- MÀN HÌNH CHÀO MỪNG -->
+  <!-- MÀN HÌNH BẮT ĐẦU -->
   <div id="start-overlay">
     <h1 style="font-size: 46px; color: #38bdf8; margin-bottom: 20px;">HEAD TILT VOCAB ARENA</h1>
     <p style="font-size: 26px; max-width: 800px; line-height: 1.6; color: #cbd5e1;">
-      🎯 <b>Cập nhật mới:</b><br>
-      ⏱ Mỗi câu có <b>10 giây</b> để đọc hiểu và suy nghĩ trước khi chốt!<br>
-      👉 Nghiêng đầu về bên nào thì ô bên đó sẽ sáng lên chính xác.<br>
-      <i>(Giữ nghiêng 1.2s để chốt đáp án hoặc dùng phím ← / →)</i>
+      🎯 <b>Thử thách 25 từ vựng Công nghệ Thông tin:</b><br>
+      ⏱ Mỗi từ có <b>10 giây</b> để đọc hiểu và chọn đáp án.<br>
+      👉 Nghiêng đầu về bên từ đúng và giữ 1.2s để chốt kết quả.<br>
+      🏁 Hoàn thành đủ 25 từ để nhận cúp vinh danh và xếp hạng!
     </p>
-    <button class="btn-start" onclick="initGame()">BẬT CAMERA & BẮT ĐẦU 🚀</button>
+    <button class="btn-action" onclick="initGame()">BẬT CAMERA & BẮT ĐẦU 🚀</button>
   </div>
 
-  <!-- THANH ĐIỂM VÀ ĐẾM NGƯỢC -->
+  <!-- MÀN HÌNH KẾT THÚC GAME -->
+  <div id="end-overlay">
+    <div class="summary-card">
+      <h1 style="font-size: 44px; color: #facc15; margin-bottom: 10px;">🏆 HOÀN THÀNH BÀI ÔN TẬP!</h1>
+      <p style="font-size: 24px; color: #94a3b8; margin-bottom: 25px;">Đã hoàn thành toàn bộ 25 thuật ngữ CNTT</p>
+      
+      <div class="result-stat">⭐ Tổng điểm: <b id="final-score" style="color: #38bdf8;">0</b></div>
+      <div class="result-stat">🎯 Trả lời đúng: <b id="final-correct" style="color: #22c55e;">0 / 25</b></div>
+      <div class="result-stat">🔥 Chuỗi đúng dài nhất: <b id="final-max-streak" style="color: #fb923c;">0</b></div>
+      <div class="result-stat" id="final-rank" style="font-size: 28px; font-weight: bold; margin-top: 15px; color: #a855f7;">
+        Hạng: IT Specialist
+      </div>
+
+      <button class="btn-action" onclick="restartGame()">CHƠI LẠI TỪ ĐẦU 🔄</button>
+    </div>
+  </div>
+
+  <!-- THANH TRÊN CÙNG -->
   <div class="top-bar">
+    <div class="badge" id="q-counter">Câu: 1 / 25</div>
     <div class="badge" id="score-display">Điểm: 0</div>
     <div class="timer-badge" id="timer-display">⏱ 10s</div>
-    <div class="badge" id="streak-display">Chuỗi: 0 🔥</div>
+    <div style="display: flex; gap: 15px; align-items: center;">
+      <button class="btn-invert" onclick="toggleInvert()" title="Đổi hướng nếu webcam bị lật ngược">🔄 Đổi chiều nghiêng</button>
+      <div class="badge" id="streak-display">Chuỗi: 0 🔥</div>
+    </div>
   </div>
 
-  <!-- BANNER CÂU HỎI -->
+  <div class="progress-strip">
+    <div class="progress-fill-main" id="progress-bar-main"></div>
+  </div>
+
+  <!-- NỘI DUNG ĐỊNH NGHĨA -->
   <div class="question-banner">
-    <div class="q-vietnamese" id="q-meaning">Đang chuẩn bị câu hỏi...</div>
+    <div class="q-vietnamese" id="q-meaning">Đang tải câu hỏi...</div>
     <div class="q-english" id="q-def">...</div>
   </div>
 
   <!-- KHU VỰC THI ĐẤU -->
   <div class="arena">
-    <!-- Ô TRÁI -->
+    <!-- HỘP TRÁI -->
     <div class="choice-box" id="box-left">
       <div class="choice-label">⬅ NGHIÊNG TRÁI</div>
       <div class="choice-text" id="text-left">...</div>
@@ -263,7 +337,7 @@
       <div class="tilt-status" id="tilt-label">GIỮ ĐẦU THẲNG</div>
     </div>
 
-    <!-- Ô PHẢI -->
+    <!-- HỘP PHẢI -->
     <div class="choice-box" id="box-right">
       <div class="choice-label">NGHIÊNG PHẢI ➡</div>
       <div class="choice-text" id="text-right">...</div>
@@ -273,46 +347,56 @@
 
   <script>
     // 25 TỪ VỰNG CNTT CHUẨN GIÁO TRÌNH
-    const vocabList = [
+    const originalVocabList = [
+      { word: "Science", meaning: "Khoa học", def: "A systematic enterprise building knowledge through testable explanations" },
+      { word: "Interchangeably", meaning: "Có thể thay thế cho nhau", def: "In a way that can be exchanged or substituted" },
+      { word: "Order", meaning: "Trật tự / Thứ tự", def: "The arrangement or sequence of things in relation to each other" },
+      { word: "Retrieve", meaning: "Lấy, gọi ra", def: "To get or bring information back from computer memory" },
       { word: "Control unit", meaning: "Đơn vị điều khiển", def: "Examines instructions and directs operations inside the CPU" },
       { word: "Arithmetic-logical unit", meaning: "Đơn vị số học - logic", def: "Performs mathematical calculations (+, -) and logical tests" },
-      { word: "Binary digit", meaning: "Số nhị phân (Bit)", def: "The smallest unit of data in computing: either 0 or 1" },
-      { word: "RAM memory", meaning: "Bộ nhớ RAM", def: "Temporary random-access memory where running programs are stored" },
-      { word: "Retrieve", meaning: "Lấy, gọi ra", def: "To get or bring information back from computer memory" },
+      { word: "State", meaning: "Trạng thái", def: "The particular condition of a circuit switch (ON or OFF)" },
       { word: "Transmit", meaning: "Truyền", def: "To broadcast or pass electrical signals from one place to another" },
-      { word: "Current", meaning: "Dòng điện", def: "A flow of electricity through a wire or circuit" },
-      { word: "State", meaning: "Trạng thái", def: "The condition of a circuit switch (ON or OFF)" },
-      { word: "Connected", meaning: "Kết nối", def: "Joined together by electronic switches or cables" },
-      { word: "Command", meaning: "Mệnh lệnh", def: "An instruction given to a computer program" },
+      { word: "Signal", meaning: "Tín hiệu", def: "An electrical impulse transmitted through a circuit" },
+      { word: "Command", meaning: "Mệnh lệnh", def: "An instruction given to a computer program or system" },
       { word: "Interpret", meaning: "Dịch / Diễn giải", def: "To translate or explain the meaning of program instructions" },
       { word: "Load", meaning: "Tải", def: "To transfer data from storage into main memory" },
       { word: "Console", meaning: "Thiết bị đầu cuối", def: "A panel or screen containing controls to operate equipment" },
       { word: "Manual", meaning: "Bằng tay / Thủ công", def: "Done with the hands rather than automatically" },
       { word: "Automatic", meaning: "Tự động", def: "Working by itself without human intervention" },
+      { word: "Connected", meaning: "Kết nối", def: "Joined together by electronic switches or cables" },
+      { word: "Current", meaning: "Dòng điện", def: "A flow of electricity through a wire or circuit" },
+      { word: "Binary digit", meaning: "Số nhị phân (Bit)", def: "The smallest unit of data in computing: either 0 or 1" },
       { word: "Grouped", meaning: "Nhóm / Gom cụm", def: "Gathered together (e.g. 8 bits grouped into 1 byte)" },
       { word: "Arrangement", meaning: "Sắp xếp / Bố trí", def: "A specific layout or pattern of bits" },
       { word: "Representation", meaning: "Biểu diễn / Hiển thị lại", def: "The way information is coded in digital form" },
       { word: "Reserved", meaning: "Cất giữ / Dành riêng", def: "Kept specially for a particular purpose (first 32 ASCII codes)" },
       { word: "Codes", meaning: "Mã", def: "A standard system of characters and symbols" },
-      { word: "Document", meaning: "Tài liệu", def: "A file created by an application" },
-      { word: "Order", meaning: "Trật tự / Thứ tự", def: "The sequence of things in relation to each other" },
-      { word: "Science", meaning: "Khoa học", def: "Systematic knowledge of computing and physical world" },
-      { word: "Interchangeably", meaning: "Có thể thay thế cho nhau", def: "In a way that can be exchanged or substituted" },
-      { word: "Signal", meaning: "Tín hiệu", def: "An electrical impulse transmitted through a circuit" }
+      { word: "RAM memory", meaning: "Bộ nhớ RAM", def: "Temporary random-access memory where running programs are stored" },
+      { word: "Document", meaning: "Tài liệu", def: "A file created by an application" }
     ];
 
+    let gameQuestions = [];
+    let currentIdx = 0;
     let currentQ = null;
-    let correctSide = null; // 'left' hoặc 'right'
+    let correctSide = null;
     let score = 0;
+    let correctCount = 0;
     let streak = 0;
+    let maxStreak = 0;
     let isProcessingAnswer = false;
 
-    // Bộ đếm thời gian 10s
+    let invertDirection = true;
     let timeLeft = 10;
     let timerInterval = null;
 
     let tiltHoldTime = 0;
-    const HOLD_REQUIRED = 1200; // Giữ 1.2s để chốt
+    const HOLD_REQUIRED = 1200;
+    let cameraInstance = null;
+
+    function toggleInvert() {
+      invertDirection = !invertDirection;
+      alert(invertDirection ? "Đã chuyển: Chế độ mặc định" : "Đã chuyển: Chế độ đảo chiều");
+    }
 
     async function initGame() {
       document.getElementById('start-overlay').style.display = 'none';
@@ -331,7 +415,7 @@
 
       faceMesh.onResults(onFaceResults);
 
-      const camera = new Camera(videoElement, {
+      cameraInstance = new Camera(videoElement, {
         onFrame: async () => {
           await faceMesh.send({ image: videoElement });
         },
@@ -339,14 +423,31 @@
         height: 480
       });
 
-      camera.start();
-      loadNextQuestion();
+      cameraInstance.start();
       setupKeyboardFallback();
+      restartGame();
     }
 
-    // TÍNH TOÁN VÀ ĐẢO LẠI LOGIC GÓC NGHIÊNG CHO ĐÚNG THỰC TẾ
+    function restartGame() {
+      document.getElementById('end-overlay').style.display = 'none';
+      score = 0;
+      correctCount = 0;
+      streak = 0;
+      maxStreak = 0;
+      currentIdx = 0;
+      
+      // Xáo trộn ngẫu nhiên thứ tự 25 câu để mỗi lần chơi là 1 trải nghiệm mới
+      gameQuestions = [...originalVocabList].sort(() => Math.random() - 0.5);
+
+      document.getElementById('score-display').innerText = `Điểm: 0`;
+      document.getElementById('streak-display').innerText = `Chuỗi: 0 🔥`;
+
+      loadQuestionByIndex(0);
+    }
+
+    // NHẬN DIỆN VÀ TÍNH HƯỚNG NGHIÊNG
     function onFaceResults(results) {
-      if (isProcessingAnswer) return;
+      if (isProcessingAnswer || currentIdx >= gameQuestions.length) return;
 
       if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
         document.getElementById('tilt-label').innerText = "VUI LÒNG ĐỨNG TRƯỚC CAMERA";
@@ -356,21 +457,20 @@
       }
 
       const landmarks = results.multiFaceLandmarks[0];
-      const leftEye = landmarks[33];   // Điểm mắt trái trên khung hình
-      const rightEye = landmarks[263]; // Điểm mắt phải trên khung hình
+      const leftEye = landmarks[33];
+      const rightEye = landmarks[263];
 
       const dy = rightEye.y - leftEye.y;
       const dx = rightEye.x - leftEye.x;
-      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
-      // SỬA LỖI NGƯỢC HƯỚNG:
-      // Khi người dùng nghiêng đầu sang BÊN PHẢI thật của mình:
-      // góc nghiêng angle > 12 độ -> CHỌN PHẢI (Right)
-      // Khi người dùng nghiêng đầu sang BÊN TRÁI thật của mình:
-      // góc nghiêng angle < -12 độ -> CHỌN TRÁI (Left)
-      if (angle > 12) {
+      if (invertDirection) {
+        angle = -angle;
+      }
+
+      if (angle > 11) {
         updateTilt('right');
-      } else if (angle < -12) {
+      } else if (angle < -11) {
         updateTilt('left');
       } else {
         updateTilt('center');
@@ -426,22 +526,31 @@
       }
     }
 
-    // TẢI CÂU HỎI MỚI & BẮT ĐẦU ĐẾM NGƯỢC 10S
-    function loadNextQuestion() {
+    // TẢI CÂU HỎI THEO THỨ TỰ 0 -> 24
+    function loadQuestionByIndex(index) {
+      if (index >= gameQuestions.length) {
+        endGame();
+        return;
+      }
+
       isProcessingAnswer = false;
       tiltHoldTime = 0;
       updateTilt('center');
+
+      document.getElementById('q-counter').innerText = `Câu: ${index + 1} / 25`;
+      document.getElementById('progress-bar-main').style.width = `${((index + 1) / 25) * 100}%`;
 
       const boxL = document.getElementById('box-left');
       const boxR = document.getElementById('box-right');
       boxL.className = 'choice-box';
       boxR.className = 'choice-box';
 
-      currentQ = vocabList[Math.floor(Math.random() * vocabList.length)];
+      currentQ = gameQuestions[index];
       
-      let wrongWord = vocabList[Math.floor(Math.random() * vocabList.length)].word;
+      // Lấy 1 từ ngẫu nhiên trong danh sách để làm từ sai
+      let wrongWord = originalVocabList[Math.floor(Math.random() * originalVocabList.length)].word;
       while (wrongWord === currentQ.word) {
-        wrongWord = vocabList[Math.floor(Math.random() * vocabList.length)].word;
+        wrongWord = originalVocabList[Math.floor(Math.random() * originalVocabList.length)].word;
       }
 
       correctSide = Math.random() < 0.5 ? 'left' : 'right';
@@ -457,27 +566,27 @@
         document.getElementById('text-right').innerText = currentQ.word;
       }
 
-      // ĐẾM NGƯỢC 10 GIÂY
+      // ĐẾM NGƯỢC 10S
       clearInterval(timerInterval);
       timeLeft = 10;
-      document.getElementById('timer-display').innerText = `⏱ ${timeLeft}s`;
-      document.getElementById('timer-display').style.background = "#422006";
+      const timerDisplay = document.getElementById('timer-display');
+      timerDisplay.innerText = `⏱ ${timeLeft}s`;
+      timerDisplay.style.background = "#422006";
 
       timerInterval = setInterval(() => {
         timeLeft--;
-        document.getElementById('timer-display').innerText = `⏱ ${timeLeft}s`;
+        timerDisplay.innerText = `⏱ ${timeLeft}s`;
         if (timeLeft <= 3) {
-          document.getElementById('timer-display').style.background = "#7f1d1d";
+          timerDisplay.style.background = "#7f1d1d";
         }
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
-          // Hết giờ: tự động tính sai và hiện đáp án đúng
           triggerChoice('timeout');
         }
       }, 1000);
     }
 
-    // CHỐT ĐÁP ÁN
+    // XỬ LÝ KHI CHỌN XONG 1 CÂU
     function triggerChoice(chosenSide) {
       if (isProcessingAnswer) return;
       isProcessingAnswer = true;
@@ -488,7 +597,9 @@
 
       if (chosenSide === correctSide) {
         score += 100;
+        correctCount += 1;
         streak += 1;
+        if (streak > maxStreak) maxStreak = streak;
         chosenBox.classList.add('correct');
         document.getElementById('tilt-label').innerText = "CHÍNH XÁC! +100 ĐIỂM 🎉";
         document.getElementById('tilt-label').style.color = "#22c55e";
@@ -503,15 +614,34 @@
       document.getElementById('score-display').innerText = `Điểm: ${score}`;
       document.getElementById('streak-display').innerText = `Chuỗi: ${streak} 🔥`;
 
+      // Sau 2 giây chuyển sang câu tiếp theo
       setTimeout(() => {
-        loadNextQuestion();
-      }, 2500);
+        currentIdx++;
+        loadQuestionByIndex(currentIdx);
+      }, 2000);
     }
 
-    // BÀN PHÍM DỰ PHÒNG
+    // KẾT THÚC GAME VÀ TRAO GIẢI
+    function endGame() {
+      clearInterval(timerInterval);
+      document.getElementById('end-overlay').style.display = 'flex';
+      
+      document.getElementById('final-score').innerText = `${score} PTS`;
+      document.getElementById('final-correct').innerText = `${correctCount} / 25 từ`;
+      document.getElementById('final-max-streak').innerText = `${maxStreak} câu liên tiếp`;
+
+      let rankTitle = "IT Beginner 💻";
+      if (correctCount >= 23) rankTitle = "👑 IT GRANDMASTER (Xuất Sắc)";
+      else if (correctCount >= 18) rankTitle = "⚡ SENIOR DEVELOPER (Giỏi)";
+      else if (correctCount >= 12) rankTitle = "🎯 JUNIOR TECHNICIAN (Khá)";
+
+      document.getElementById('final-rank').innerText = rankTitle;
+    }
+
+    // DỰ PHÒNG PHÍM MŨI TÊN
     function setupKeyboardFallback() {
       window.addEventListener('keydown', (e) => {
-        if (isProcessingAnswer) return;
+        if (isProcessingAnswer || currentIdx >= gameQuestions.length) return;
         if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
           triggerChoice('left');
         } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
