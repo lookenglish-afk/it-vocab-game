@@ -113,4 +113,383 @@
       left: 0;
       height: 14px;
       width: 0%;
-      background: #38bdf
+      background: #38bdf8;
+      transition: width 0.05s linear;
+    }
+
+    /* TRẠNG THÁI ACTIVE KHI NGHIÊNG ĐẦU */
+    .choice-box.tilting {
+      border-color: #38bdf8;
+      transform: scale(1.05);
+      box-shadow: 0 0 35px rgba(56, 189, 248, 0.6);
+    }
+    .choice-box.correct {
+      border-color: #22c55e !important;
+      background: rgba(22, 101, 52, 0.95) !important;
+    }
+    .choice-box.wrong {
+      border-color: #ef4444 !important;
+      background: rgba(153, 27, 27, 0.95) !important;
+    }
+
+    /* KHUNG CAMERA CHÍNH GIỮA */
+    .camera-container {
+      width: 38%;
+      height: 82%;
+      background: #000;
+      border: 4px solid #38bdf8;
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    video#webcam {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* Gương lật ngược để cử động tự nhiên */
+    }
+    /* Mũi tên chỉ dẫn hướng đầu */
+    .tilt-indicator {
+      position: absolute;
+      top: 15px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 20px;
+      color: #38bdf8;
+      font-weight: bold;
+      pointer-events: none;
+    }
+    .center-crosshair {
+      position: absolute;
+      width: 120px;
+      height: 150px;
+      border: 2px dashed rgba(56, 189, 248, 0.4);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* MÀN HÌNH KHỞI ĐỘNG CAMERA */
+    #start-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.95);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 30px;
+    }
+    .btn-start {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 32px;
+      font-weight: bold;
+      padding: 16px 40px;
+      background: #0284c7;
+      color: white;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      margin-top: 25px;
+      box-shadow: 0 0 20px rgba(2, 132, 199, 0.5);
+      transition: all 0.2s;
+    }
+    .btn-start:hover {
+      background: #0369a1;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MÀN HÌNH BẤM BẮT ĐẦU ĐỂ XIN QUYỀN CAMERA -->
+  <div id="start-overlay">
+    <h1 style="font-size: 48px; color: #38bdf8; margin-bottom: 20px;">HEAD TILT VOCAB ARENA</h1>
+    <p style="font-size: 26px; max-width: 750px; line-height: 1.5; color: #cbd5e1;">
+      🎮 <b>Cách chơi:</b> Đứng trước Webcam, quan sát định nghĩa ở trên.<br>
+      👉 Nghiêng đầu sang <b>TRÁI</b> hoặc sang <b>PHẢI</b> để chọn từ vựng đúng!<br>
+      <i>(Giữ nghiêng 1.2 giây để chốt đáp án. Có thể bấm phím mũi tên ← hoặc →)</i>
+    </p>
+    <button class="btn-start" onclick="initGame()">BẬT CAMERA & BẮT ĐẦU 🚀</button>
+  </div>
+
+  <!-- THANH ĐIỂM -->
+  <div class="top-bar">
+    <div class="score-badge" id="score-display">Điểm: 0</div>
+    <div class="status-text" id="status-hint">Đang nhận diện khuôn mặt...</div>
+    <div class="score-badge" id="streak-display">Chuỗi: 0 🔥</div>
+  </div>
+
+  <!-- NỘI DUNG CÂU HỎI -->
+  <div class="question-banner">
+    Nghĩa: <span id="q-meaning">...</span> &nbsp;|&nbsp; 
+    <i style="font-size: 22px; color: #94a3b8;" id="q-def">...</i>
+  </div>
+
+  <!-- KHU VỰC THI ĐẤU -->
+  <div class="arena">
+    <!-- LỰA CHỌN TRÁI -->
+    <div class="choice-box" id="box-left">
+      <div class="choice-tag">⬅ NGHIÊNG TRÁI</div>
+      <div class="choice-text" id="text-left">Đang tải...</div>
+      <div class="progress-fill" id="prog-left"></div>
+    </div>
+
+    <!-- CAMERA CHÍNH GIỮA -->
+    <div class="camera-container">
+      <video id="webcam" autoplay playsinline></video>
+      <div class="center-crosshair"></div>
+      <div class="tilt-indicator" id="tilt-label">GIỮ ĐẦU THẲNG</div>
+    </div>
+
+    <!-- LỰA CHỌN PHẢI -->
+    <div class="choice-box" id="box-right">
+      <div class="choice-tag">NGHIÊNG PHẢI ➡</div>
+      <div class="choice-text" id="text-right">Đang tải...</div>
+      <div class="progress-fill" id="prog-right"></div>
+    </div>
+  </div>
+
+  <script>
+    // BỘ 25 TỪ VỰNG CNTT CHUẨN
+    const vocabList = [
+      { word: "Control unit", meaning: "Đơn vị điều khiển", def: "Examines instructions and directs operations inside the CPU" },
+      { word: "Arithmetic-logical unit", meaning: "Đơn vị số học - logic", def: "Performs mathematical calculations (+, -) and logical tests" },
+      { word: "Binary digit", meaning: "Số nhị phân (Bit)", def: "The smallest unit of data in computing: either 0 or 1" },
+      { word: "RAM memory", meaning: "Bộ nhớ RAM", def: "Temporary random-access memory where running programs are stored" },
+      { word: "Retrieve", meaning: "Lấy, gọi ra", def: "To get or bring information back from computer memory" },
+      { word: "Transmit", meaning: "Truyền", def: "To broadcast or pass electrical signals from one place to another" },
+      { word: "Current", meaning: "Dòng điện", def: "A flow of electricity through a wire or circuit" },
+      { word: "State", meaning: "Trạng thái", def: "The condition of a circuit switch (ON or OFF)" },
+      { word: "Connected", meaning: "Kết nối", def: "Joined together by electronic switches or cables" },
+      { word: "Command", meaning: "Mệnh lệnh", def: "An instruction given to a computer program" },
+      { word: "Interpret", meaning: "Dịch / Diễn giải", def: "To translate or explain the meaning of program instructions" },
+      { word: "Load", meaning: "Tải", def: "To transfer data from storage into main memory" },
+      { word: "Console", meaning: "Thiết bị đầu cuối", def: "A panel or screen containing controls to operate equipment" },
+      { word: "Manual", meaning: "Bằng tay / Thủ công", def: "Done with the hands rather than automatically" },
+      { word: "Automatic", meaning: "Tự động", def: "Working by itself without human intervention" },
+      { word: "Grouped", meaning: "Nhóm / Gom cụm", def: "Gathered together (e.g. 8 bits grouped into 1 byte)" },
+      { word: "Arrangement", meaning: "Sắp xếp / Bố trí", def: "A specific layout or pattern of bits" },
+      { word: "Representation", meaning: "Biểu diễn / Hiển thị lại", def: "The way information is coded in digital form" },
+      { word: "Reserved", meaning: "Cất giữ / Dành riêng", def: "Kept specially for a particular purpose (first 32 ASCII codes)" },
+      { word: "Codes", meaning: "Mã", def: "A standard system of characters and symbols" },
+      { word: "Document", meaning: "Tài liệu", def: "A file created by an application" },
+      { word: "Order", meaning: "Trật tự / Thứ tự", def: "The sequence of things in relation to each other" },
+      { word: "Science", meaning: "Khoa học", def: "Systematic knowledge of computing and physical world" },
+      { word: "Interchangeably", meaning: "Có thể thay thế cho nhau", def: "In a way that can be exchanged or substituted" },
+      { word: "Signal", meaning: "Tín hiệu", def: "An electrical impulse transmitted through a circuit" }
+    ];
+
+    let currentQ = null;
+    let correctSide = null; // 'left' hoặc 'right'
+    let score = 0;
+    let streak = 0;
+    let isProcessingAnswer = false;
+
+    let tiltState = 'center'; // 'left', 'right', 'center'
+    let tiltHoldTime = 0;
+    const HOLD_REQUIRED = 1200; // Cần giữ nghiêng 1.2 giây để xác nhận
+
+    // BẬT CAMERA & MEDIAPIPE FACE MESH
+    async function initGame() {
+      document.getElementById('start-overlay').style.display = 'none';
+      const videoElement = document.getElementById('webcam');
+
+      const faceMesh = new FaceMesh({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+      });
+
+      faceMesh.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+
+      faceMesh.onResults(onFaceResults);
+
+      const camera = new Camera(videoElement, {
+        onFrame: async () => {
+          await faceMesh.send({ image: videoElement });
+        },
+        width: 640,
+        height: 480
+      });
+
+      camera.start();
+      loadNextQuestion();
+      setupKeyboardFallback();
+    }
+
+    // NHẬN DIỆN GÓC NGHIÊNG CỦA ĐẦU
+    function onFaceResults(results) {
+      if (isProcessingAnswer) return;
+
+      if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+        document.getElementById('tilt-label').innerText = "VUI LÒNG ĐỨNG TRƯỚC CAMERA";
+        document.getElementById('tilt-label').style.color = "#f87171";
+        updateTilt('center');
+        return;
+      }
+
+      const landmarks = results.multiFaceLandmarks[0];
+      // Mắt trái (33), Mắt phải (263), Chóp mũi (1)
+      const leftEye = landmarks[33];
+      const rightEye = landmarks[263];
+
+      // Do camera được lật gương (scaleX(-1)), nên nếu mắt trái thấp hơn mắt phải tức là đang nghiêng sang TRÁI của người dùng
+      const dy = leftEye.y - rightEye.y;
+      const dx = leftEye.x - rightEye.x;
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+      // Ngưỡng nghiêng đầu (> 12 độ)
+      if (angle > 12) {
+        updateTilt('left');
+      } else if (angle < -12) {
+        updateTilt('right');
+      } else {
+        updateTilt('center');
+      }
+    }
+
+    // XỬ LÝ TIẾN ĐỘ GIỮ ĐẦU
+    let lastTimestamp = performance.now();
+    function updateTilt(side) {
+      const now = performance.now();
+      const delta = now - lastTimestamp;
+      lastTimestamp = now;
+
+      const tiltLabel = document.getElementById('tilt-label');
+      const boxL = document.getElementById('box-left');
+      const boxR = document.getElementById('box-right');
+      const progL = document.getElementById('prog-left');
+      const progR = document.getElementById('prog-right');
+
+      if (side === 'left') {
+        tiltLabel.innerText = "⬅ ĐANG NGHIÊNG TRÁI";
+        tiltLabel.style.color = "#38bdf8";
+        boxL.classList.add('tilting');
+        boxR.classList.remove('tilting');
+        
+        tiltHoldTime += delta;
+        progL.style.width = Math.min((tiltHoldTime / HOLD_REQUIRED) * 100, 100) + "%";
+        progR.style.width = "0%";
+
+        if (tiltHoldTime >= HOLD_REQUIRED) {
+          triggerChoice('left');
+        }
+      } else if (side === 'right') {
+        tiltLabel.innerText = "NGHIÊNG PHẢI ➡";
+        tiltLabel.style.color = "#38bdf8";
+        boxR.classList.add('tilting');
+        boxL.classList.remove('tilting');
+
+        tiltHoldTime += delta;
+        progR.style.width = Math.min((tiltHoldTime / HOLD_REQUIRED) * 100, 100) + "%";
+        progL.style.width = "0%";
+
+        if (tiltHoldTime >= HOLD_REQUIRED) {
+          triggerChoice('right');
+        }
+      } else {
+        tiltLabel.innerText = "GIỮ ĐẦU THẲNG";
+        tiltLabel.style.color = "#94a3b8";
+        boxL.classList.remove('tilting');
+        boxR.classList.remove('tilting');
+        progL.style.width = "0%";
+        progR.style.width = "0%";
+        tiltHoldTime = 0;
+      }
+    }
+
+    // TẢI CÂU HỎI MỚI
+    function loadNextQuestion() {
+      isProcessingAnswer = false;
+      tiltHoldTime = 0;
+      updateTilt('center');
+
+      const boxL = document.getElementById('box-left');
+      const boxR = document.getElementById('box-right');
+      boxL.className = 'choice-box';
+      boxR.className = 'choice-box';
+
+      // Lấy ngẫu nhiên 1 từ vựng
+      currentQ = vocabList[Math.floor(Math.random() * vocabList.length)];
+      
+      // Lấy 1 từ sai làm đáp án nhiễu
+      let wrongWord = vocabList[Math.floor(Math.random() * vocabList.length)].word;
+      while (wrongWord === currentQ.word) {
+        wrongWord = vocabList[Math.floor(Math.random() * vocabList.length)].word;
+      }
+
+      // Đảo ngẫu nhiên vị trí Trái / Phải
+      correctSide = Math.random() < 0.5 ? 'left' : 'right';
+
+      document.getElementById('q-meaning').innerText = currentQ.meaning;
+      document.getElementById('q-def').innerText = currentQ.def;
+
+      if (correctSide === 'left') {
+        document.getElementById('text-left').innerText = currentQ.word;
+        document.getElementById('text-right').innerText = wrongWord;
+      } else {
+        document.getElementById('text-left').innerText = wrongWord;
+        document.getElementById('text-right').innerText = currentQ.word;
+      }
+
+      document.getElementById('status-hint').innerText = "Nghiêng đầu để chọn đáp án!";
+      document.getElementById('status-hint').style.color = "#facc15";
+    }
+
+    // KIỂM TRA ĐÁP ÁN
+    function triggerChoice(chosenSide) {
+      if (isProcessingAnswer) return;
+      isProcessingAnswer = true;
+
+      const chosenBox = document.getElementById(chosenSide === 'left' ? 'box-left' : 'box-right');
+      const correctBox = document.getElementById(correctSide === 'left' ? 'box-left' : 'box-right');
+
+      if (chosenSide === correctSide) {
+        // Đúng
+        score += 100;
+        streak += 1;
+        chosenBox.classList.add('correct');
+        document.getElementById('status-hint').innerText = "CHÍNH XÁC! +100 ĐIỂM 🎉";
+        document.getElementById('status-hint').style.color = "#22c55e";
+      } else {
+        // Sai
+        streak = 0;
+        chosenBox.classList.add('wrong');
+        correctBox.classList.add('correct');
+        document.getElementById('status-hint').innerText = "TIẾC QUÁ, SAI RỒI! ❌";
+        document.getElementById('status-hint').style.color = "#ef4444";
+      }
+
+      document.getElementById('score-display').innerText = `Điểm: ${score}`;
+      document.getElementById('streak-display').innerText = `Chuỗi: ${streak} 🔥`;
+
+      // Sau 2 giây tự động chuyển câu tiếp theo
+      setTimeout(() => {
+        loadNextQuestion();
+      }, 2000);
+    }
+
+    // DỰ PHÒNG PHÍM BẤM BẰNG BÀN PHÍM (← / → hoặc A / D)
+    function setupKeyboardFallback() {
+      window.addEventListener('keydown', (e) => {
+        if (isProcessingAnswer) return;
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+          triggerChoice('left');
+        } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+          triggerChoice('right');
+        }
+      });
+    }
+  </script>
+</body>
+</html>
